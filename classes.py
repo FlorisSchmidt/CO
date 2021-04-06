@@ -1,6 +1,8 @@
 class Solution(object):
-    def __init__(self,Days):
+    def __init__(self, Days):
         self.Days = []
+        for i in range(Days):
+            self.Days.append(self.SolutionDay(i+1))
         self.givenCost = self.SolutionCost()
         self.calcCost = self.SolutionCost()
 
@@ -54,6 +56,7 @@ class Machine(object):
         self.penalty = penalty
         self.installed = False
 
+
 class Locations(object):
     def __init__(self, ID, x, y):
         self.ID = ID
@@ -85,3 +88,6 @@ class Truck(object):
         self.dayCost = dayCost
         self.cost = cost
         self.machines = []
+
+    def getUsedCapacity(self):
+        return sum([machine.size for machine in self.machines])
