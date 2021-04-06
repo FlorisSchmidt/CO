@@ -1,23 +1,23 @@
 from classes import Machine, Request, Technician
 
 def extract(instance):
-    Machines = []
-    Requests = []
-    Tech = []
+    instance.extractedMachines = []
+    instance.extractedRequests = []
+    instance.extractedTechnicians = []
 
     for machine in instance.Machines:
         machine = str(machine).split()
-        ID = machine[0]
-        size = machine[1]
-        penalty = machine[2]
-        Machines.append(Machine(ID,size,penalty))
+        ID = int(machine[0])
+        size = int(machine[1])
+        penalty = int(machine[2])
+        instance.extractedMachines.append(Machine(ID,size,penalty))
 
     for technician in instance.Technicians:
         technician = str(technician).split()
-        ID = technician[0]
-        locID = technician[1]
-        maxDistance = technician[2]
-        maxInstals = technician[3]
+        ID = int(technician[0])
+        locID = int(technician[1])
+        maxDistance = int(technician[2])
+        maxInstals = int(technician[3])
         machines = technician[4:]
         Machines = []
         machineID = 1
@@ -25,17 +25,21 @@ def extract(instance):
             if(int(machine)==1):
                 Machines.append(machineID)
             machineID+=1
-        Tech.append(Technician(ID,locID,maxDistance,maxInstals,Machines))
+        instance.extractedTechnicians.append(Technician(ID,locID,maxDistance,maxInstals,Machines))
 
     for request in instance.Requests:
         request = str(request).split()
-        ID = request[0]
-        locID = request[1]
-        firstDay = request[2]
-        lastDay = request[3]
-        machineID = request[4]
-        amount = request[5]
+        ID = int(request[0])
+        locID = int(request[1])
+        firstDay = int(request[2])
+        lastDay = int(request[3])
+        machineID = int(request[4])
+        amount = int(request[5])
         request = Request(ID,locID,firstDay,lastDay,machineID,amount)
-        Requests.append(request)
+        instance.extractedRequests.append(request)
 
-    return Requests, Machines, Tech
+    instance.Machines = instance.extractedMachines
+    instance.Requests = instance.extractedRequests
+    instance.Technicians = instance.extractedTechnicians
+
+    return instance
