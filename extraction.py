@@ -15,17 +15,19 @@ def extract(instance):
     for technician in instance.Technicians:
         technician = str(technician).split()
         ID = int(technician[0])
+        ndays = instance.Days
         locID = int(technician[1])
         maxDistance = int(technician[2])
         maxInstals = int(technician[3])
         machines = technician[4:]
         Machines = []
         machineID = 1
+
         for machine in machines:
             if(int(machine)==1):
                 Machines.append(machineID)
             machineID+=1
-        instance.extractedTechnicians.append(Technician(ID,locID,maxDistance,maxInstals,Machines))
+        instance.extractedTechnicians.append(Technician(ID,ndays,locID,maxDistance,maxInstals,Machines))
 
     for request in instance.Requests:
         request = str(request).split()

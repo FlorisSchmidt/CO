@@ -6,14 +6,17 @@ class Solution(object):
         self.givenCost = self.SolutionCost()
         self.calcCost = self.SolutionCost()
 
-
     class SolutionDay(object):
-            def __init__(self, dayNr):
-                self.dayNumber = dayNr
-                self.NrTruckRoutes = None
-                self.TruckRoutes = []
-                self.NrTechnicianRoutes = None
-                self.TechnicianRoutes = []
+        def __init__(self, dayNr):
+            self.dayNumber = dayNr
+            self.NrTruckRoutes = []
+            self.TruckRoutes = []
+            self.Trucks = []
+            self.Technicians = []
+            self.NrTechnicianRoutes = []
+            self.TechnicianRoutes = []
+            self.TruckRequests = []
+            self.TechnicianRequests = []
 
     class SolutionCost(object):
         def __init__(self):
@@ -47,7 +50,6 @@ class Solution(object):
             self.Route = []
             self.calcDistance = None
 
-    
 
 class Machine(object):
     def __init__(self, ID, size, penalty):
@@ -63,6 +65,7 @@ class Locations(object):
         self.x = x
         self.y = y
 
+
 class Request(object):
     def __init__(self, ID, locID, firstDay, LastDay, machineID, amount):
         self.ID = ID
@@ -72,22 +75,54 @@ class Request(object):
         self.machineID = machineID
         self.amount = amount
 
-class Technician(object):
-    def __init__(self, ID, locID,maxDistance, maxInstals, machines):
-        self.ID = ID
-        self.locID = locID
-        self.machines = machines
 
+class Technician(object):
+    def __init__(self, ID, ndays, locID, maxDistance, maxInstalls, machines):
+        self.ID = ID
+        self.ndays = ndays
+        self.locID = locID
+        self.maxDistance = maxDistance
+        self.maxInstalls = maxInstalls
+        self.machines = machines
+        self.installs = 0
+        self.daysWorked = 0
+        self.routes = dict()
+        self.requests = dict()
+        self.available = True
+
+        for i in range(1, ndays + 1):
+            self.routes[i] = [locID, locID]
+        for i in range(1, ndays + 1):
+            self.requests[i] = []
+
+    def set_available(self, daynum):
+        if self.daysWorked > 4:
+            self.available = False
+        if not self.requests.get(daynum):
+            self.available = True
 
 class Truck(object):
-    def __init__(self, ID, day, route, distanceCost, dayCost, cost):
+    def __init__(self, ID, day, distanceCost, dayCost, cost):
         self.ID = ID
         self.dayNum = day
-        self.route = route
+        self.route = [1, 1]
         self.distanceCost = distanceCost
         self.dayCost = dayCost
         self.cost = cost
         self.machines = []
+        self.requests = []
 
-    def getUsedCapacity(self):
-        return sum([machine.size for machine in self.machines])
+
+    def getFirstEndDay(self):
+        end_day = 10000
+        for request in self.requests:
+            if request.LastDay < end_day:
+                end_day = request.LastDay
+        return end_day
+
+    def getLastStartDay(self):
+        start_day = 0
+        for request in self.requests:
+            if request.FirstDay < start_day:
+                start_day = request.FirstDay
+        return start_day
