@@ -204,15 +204,15 @@ def solve(file):
         print('NAME = Instance 20')
         print(' ')
         for day in solution.Days:
-            print("DAY = ", day.dayNumber)
-            print("NUMBER_OF_TRUCKS = ", len(day.TruckRoutes))
+            print("DAY = " + str(day.dayNumber))
+            print("NUMBER_OF_TRUCKS = " + str(len(day.TruckRoutes)))
             for truck in day.Trucks:
                 prnt = str(truck.ID)
                 for req in truck.requests:
                     prnt += ' ' + str(req.ID)
                 if truck.requests:
                     print(prnt)
-            print("NUMBER_OF_TECHNICIANS =  ", day.NrTechnicianRoutes)
+            print("NUMBER_OF_TECHNICIANS =  " +  str(day.NrTechnicianRoutes))
             unsorted = day.Technicians
             sortz = sorted(unsorted, key=operator.attrgetter('ID'))
             for technician in sortz:
