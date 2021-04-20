@@ -40,6 +40,11 @@ def extract(instance):
         request = Request(ID,locID,firstDay,lastDay,machineID,amount)
         instance.extractedRequests.append(request)
 
+    locdict = dict()
+    for loc in instance.Locations:
+        locdict[loc.ID] = (loc.X,loc.Y)
+        instance.Locations = locdict
+
     instance.Machines = instance.extractedMachines
     instance.Requests = instance.extractedRequests
     instance.Technicians = instance.extractedTechnicians
