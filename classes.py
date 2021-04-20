@@ -41,13 +41,13 @@ class Solution(object):
     class TruckRoute(object):
         def __init__(self):
             self.ID = None
-            self.Route = []
+            self.route = []
             self.calcDistance = None
 
     class TechnicianRoute(object):
         def __init__(self):
             self.ID = None
-            self.Route = []
+            self.route = []
             self.calcDistance = None
 
 
@@ -71,9 +71,10 @@ class Request(object):
         self.ID = ID
         self.locID = locID
         self.firstDay = firstDay
-        self.LastDay = LastDay
+        self.lastDay = LastDay
         self.machineID = machineID
         self.amount = amount
+
 
 
 class Technician(object):
