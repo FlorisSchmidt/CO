@@ -117,8 +117,8 @@ class Truck(object):
     def getFirstEndDay(self):
         end_day = 10000
         for request in self.requests:
-            if request.LastDay < end_day:
-                end_day = request.LastDay
+            if request.lastDay < end_day:
+                end_day = request.lastDay
         return end_day
 
     def getLastStartDay(self):
