@@ -1,4 +1,6 @@
 import gurobipy as gp
+import classes
+import functions
 
 def solve(instance):
-    pass
+    solution = classes.Solution(instance.Days)
