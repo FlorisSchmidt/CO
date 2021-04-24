@@ -43,8 +43,8 @@ def extract(instance):
     locdict = dict()
     for loc in instance.Locations:
         locdict[loc.ID] = (loc.X,loc.Y)
-        instance.Locations = locdict
 
+    instance.Locations = locdict
     instance.Machines = instance.extractedMachines
     instance.Requests = instance.extractedRequests
     instance.Technicians = instance.extractedTechnicians
