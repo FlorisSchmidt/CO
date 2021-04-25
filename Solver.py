@@ -32,7 +32,7 @@ def main():
     else:
         instance = InstanceVerolog2019(args.instancefile)
         solution = greedy.solve(extraction.extract(instance))
-        output.print_solution(solution)
+        output.print_solution(solution,instance.Name)
 
 
 if __name__ == '__main__':
