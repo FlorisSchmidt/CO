@@ -78,8 +78,6 @@ def solve(instance):
             jobs_next_day.append(request)
         # try to allocate jobs
         for job in jobs_this_day:
-            if job.ID == 6:
-                pass
             if job.ID in jobs_allocated:
                 continue
             for technician in instance.Technicians:
