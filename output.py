@@ -3,7 +3,7 @@ import operator
 
 def print_solution(solution, solutionname):
     original_stdout = sys.stdout
-    with open('{} solution.txt'.format(str(solutionname)), 'w') as f:
+    with open('{} solution.txt'.format(str(solutionname)).replace(" ","_"), 'w') as f:
         sys.stdout = f # Change the standard output to the file we created.
         print('DATASET = ORTEC Caroline VeRoLog 2019')
         print('NAME = Instance 20\n')
