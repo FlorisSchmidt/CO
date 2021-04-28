@@ -67,14 +67,15 @@ class Locations(object):
 
 
 class Request(object):
-    def __init__(self, ID, locID, firstDay, LastDay, machineID, amount):
+    def __init__(self, ID, locID, firstDay, LastDay, machineID, amount, size):
         self.ID = ID
         self.locID = locID
         self.firstDay = firstDay
         self.lastDay = LastDay
         self.machineID = machineID
         self.amount = amount
-
+        self.size = size
+        self.dayOfDelivery = 0
 
 
 class Technician(object):
@@ -113,6 +114,9 @@ class Truck(object):
         self.machines = []
         self.requests = []
 
+    def addPivot(self, pivot):
+        self.route=[1,pivot.locID,1]
+        self.requests.append(pivot)
 
     def getFirstEndDay(self):
         end_day = 10000

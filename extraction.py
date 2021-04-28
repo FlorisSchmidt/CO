@@ -37,7 +37,8 @@ def extract(instance):
         lastDay = int(request[3])
         machineID = int(request[4])
         amount = int(request[5])
-        request = Request(ID,locID,firstDay,lastDay,machineID,amount)
+        size = instance.extractedMachines[machineID - 1].size * amount
+        request = Request(ID,locID,firstDay,lastDay,machineID,amount,size)
         instance.extractedRequests.append(request)
 
     locdict = dict()
