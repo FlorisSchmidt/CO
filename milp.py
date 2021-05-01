@@ -177,22 +177,16 @@ def solve(instance):
     # 23 Prevents technicians from working more than 5 days in the last 6 days
     model.addConstrs(quicksum(p[u,s] for u in range(T+1-5,T)) <=5-p[T,s] for s in range(S))
 
-    # 24 
+    # 24 Calculates b (idling time)
+    model.addConstrs(quicksum(t*y[t,i] for t in range(e[i-1]+1+1,T+1))-quicksum(t*w[t,i] for t in range(e[i-1]+1,l[i-1]+1))-1==b[i] for i in R)
+
+    # 25 
 
     model.setObjective(obj,GRB.MINIMIZE)
 
     model.Params.LogToConsole = True
+    model.Params.BestObjStop 
+    model.setParam('TimeLimit', 2*60)
     model.optimize()
     model.update()
-    print("End")
-    #def cost():
-    #    quicksum(CV*m)# + quicksum(CV*i for i in v) + quicksum(quicksum())
-
-    #Constraints
-    #max distance truck constraint
-    #model.addConstr((quicksum(d_ij[i][j]*x[i,j,k] for i,j in coordinates) <= D for k in trucks), name='maxTruckDistance')
-
-    #ensures that no more trucks can be used on a day than the number of trucks for the entire planning
-    #model.addConstr((v[day,k] for day in instance.Days <= m[k] for k in trucks), name='noMoreThanMaxTrucksOnADay')
-
-    
+    return model
