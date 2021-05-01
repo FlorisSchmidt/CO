@@ -79,28 +79,35 @@ def solve(instance):
     r = model.addVars((s for s in range(S)), vtype=GRB.BINARY, name = 'r')
 
     #v_k_t truck k is used during day: 1 if used, 0 otherwise
-    v = model.addVars(((t,k) for t in range(T) for k in range(K)), vtype=GRB.BINARY, name = 'vkt')
+    v = model.addVars(((t,k) for t in range(T) for k in range(K)), vtype=GRB.BINARY, name = 'v')
 
     #p_s_t technician s is used during day: 1 if used, 0 otherwise
-    p = model.addVars(((t,s) for t in range(T) for s in range(S)), vtype=GRB.BINARY, name = 'pst')
+    p = model.addVars(((t,s) for t in range(T) for s in range(S)), vtype=GRB.BINARY, name = 'p')
 
     #w_i_t request i is delivered on day: 1 if delivered, 0 otherwise
-    w = model.addVars(((t,i) for t in range(T) for i in R), vtype=GRB.BINARY, name = 'wit')
+    w = model.addVars(((t,i) for t in range(T) for i in R), vtype=GRB.BINARY, name = 'w')
 
     #y_i_t request i is installed on day: 1 if installed, 0 otherwise
-    y = model.addVars(((t,i) for t in range(T) for i in R), vtype=GRB.BINARY, name = 'yit')
+    y = model.addVars(((t,i) for t in range(T) for i in R), vtype=GRB.BINARY, name = 'y')
 
     #g_is number of visits done by technician
-    g = model.addVars(((s, i) for s in range(S) for i in R),vtype=GRB.INTEGER, name='gis')
+    g = model.addVars(((s, i) for s in range(S) for i in R),vtype=GRB.INTEGER, name='g')
 
     #b_i number of days installation of request j is delayed after its delivery
     b = model.addVars(((i) for i in R),vtype=GRB.INTEGER, name='b')
 
     #Objective
     model.setObjective(quicksum(m),GRB.MINIMIZE)
-    print((v[0,0]))
-    print(m[0])
+
+    #arcs entering location = arcs exiting location
+    model.addConstrs((x[t,k,i,j] == x[t,k,j,i] for i,j in R_0 if i!=j) for t in range(T) for k in range(K))
+    #start and end routes at depot
+    model.addConstrs((x[t,k,H_0,i] == x[t,k,i,H_0] for i in R) <= v[t,k] for k in range(K) for t in range(T))
+    #Max distance truck can drive
+    model.addConstrs(quicksum(d_ij[i][j]*x[t,k,i,j] for i,j in R_0 if i!=j) <= D for t in range(T) for k in range(K))
+    #Truck must be available
     model.addConstrs((v[t,k] <= m[k]) for k in range(K) for t in range(T))
+
 
     model.Params.LogToConsole = True
     model.optimize()
