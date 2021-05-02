@@ -2,6 +2,7 @@ import argparse
 import extraction
 import greedy
 import output
+import milp
 from InstanceVerolog2019 import InstanceVerolog2019
 
 
@@ -31,8 +32,8 @@ def main():
             output.print_solution(solution,instance.Name)
     else:
         instance = InstanceVerolog2019(args.instancefile)
-        solution = greedy.solve(extraction.extract(instance))
-        output.print_solution(solution,instance.Name)
+        model = milp.solve(extraction.extract(instance),30)
+        # output.print_solution(solution,instance.Name)
 
 
 if __name__ == '__main__':
