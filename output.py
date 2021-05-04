@@ -29,3 +29,7 @@ def print_solution(solution, solutionname):
                 print(sting)
             print('')
     sys.stdout = original_stdout # Reset the standard output to its original value
+
+def print_model(x_sol,z_sol):
+    print("a")
+    pass
