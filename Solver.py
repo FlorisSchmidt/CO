@@ -32,8 +32,7 @@ def main():
             output.print_solution(solution,instance.Name)
     else:
         instance = InstanceVerolog2019(args.instancefile)
-        model = milp.solve(extraction.extract(instance),30)
-        # output.print_solution(solution,instance.Name)
+        model = milp.solve(extraction.extract(instance),5)
 
 
 if __name__ == '__main__':
