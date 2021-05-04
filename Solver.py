@@ -28,7 +28,7 @@ def main():
         import glob
         for file in glob.glob("instances 2021/*.txt"):
             instance = InstanceVerolog2019(file)
-            solution = greedy.solve(extraction.extract(instance))
+            solution = milp.solve(extraction.extract(instance),20)
             output.print_solution(solution,instance.Name)
     else:
         instance = InstanceVerolog2019(args.instancefile)
