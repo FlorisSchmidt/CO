@@ -86,11 +86,13 @@ def solve(instance, max_seconds):
     
     #Decision variables
     #x_ij_k truck visits location j after location i: 1 if truck visits, 0 otherwise
-    x = model.addVars(((t,k,i,j) for t in truckRange for k in range(K) for i in R_0 for j in R_0 if i!=j), vtype=GRB.BINARY, name='xij')
+    x = model.addVars(((t,k,i,j) for t in truckRange for k in range(K) for i in R_0 for j in R_0 if i!=j), vtype=GRB.BINARY, name='x')
 
-    z = model.addVars(((t,s,i,j) for t in techRange for s in R_s for i in R_s[s] for j in R_s[s] if i!=j), vtype=GRB.BINARY, name='zij')
+    #z_ij_s technician s visits location j after location i: 1 if technician visits, 0 otherwise
+    z = model.addVars(((t,s,i,j) for t in techRange for s in R_s for i in R_s[s] for j in R_s[s] if i!=j), vtype=GRB.BINARY, name='z')
+
     #m_k number of trucks used for entire planning: 1 if truck k is used, 0 otherwise
-    m = model.addVars((k for k in range(K)), vtype=GRB.BINARY, name = 'numTrucks')
+    m = model.addVars((k for k in range(K)), vtype=GRB.BINARY, name = 'm')
 
     #r_s number of technicians used for entire planning: 1 if technician is used, 0 otherwise
     r = model.addVars((s for s in R_s), vtype=GRB.BINARY, name = 'r')
@@ -227,6 +229,6 @@ def solve(instance, max_seconds):
     def print_solution(x_sol_clean):
         output.print_model(x_sol,z_sol)
             
-    output.print_model(x_sol_clean,z_sol_clean)
+    output.print_model(x_sol_clean,z_sol_clean, instance.Name)
 
     return model
