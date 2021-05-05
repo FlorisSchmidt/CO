@@ -113,9 +113,8 @@ def print_model(x_sol,z_sol,solutionname):
                         tech_string += ' ' + '0'
                     else:
                         tech_string += ' ' + value.replace('R', '')
-
                 print(tech_string)
-            print("\n")
+            print()
     sys.stdout = original_stdout
         
 
