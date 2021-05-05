@@ -178,7 +178,19 @@ def solve(instance, max_seconds):
     model.addConstrs(z[t,s,i,j]<=p[t,s] for t in techRange for s in R_s for i in R_s[s] for j in R_s[s] if i!=j)
 
     # 17 Machine can be installed one day after delivery
-    model.addConstrs(quicksum(z[t,s,i,j] for j in R_s[s] if i!=j)==y[t,i] for s in R_s for i in R_s[s] if i!=s for t in range(e[i]+1,T+1))
+    #model.addConstrs(z.sum(t,s,i,j)==y[t,i] for s in R_s for i in R_s[s] for j in R_s[s] if i!=j if i!=s for t in range(e[i]+1,T+1))
+
+    for i in R:
+        for t in range(e[i]+1,T+1):
+            total = 0
+            for s in R_s:
+                for j in R_s[s]:
+                    if i!=j and i in R_s[s]:
+                        total+=z[t,s,i,j]
+            model.addConstr(total==y[t,i])
+            #model.addConstrs(quicksum(z[t,s,i,j] for s in R_s for j in R_s[s] if i!=j)==y[t,i])
+                    
+    #model.addConstrs(quicksum(z[t,s,i,j] )==y[t,i] for s in R_s for i in R_s[s] if i!=s for t in range(e[i]+1,T+1))
 
     # 18 Each request is installed
     model.addConstrs(quicksum(y[t,i] for t in range(e[i]+1,T+1)) == 1 for i in R)
