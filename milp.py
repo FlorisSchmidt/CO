@@ -145,7 +145,7 @@ def solve(instance, max_seconds):
     model.addConstrs((x[t,k,i,j]<=v[t,k]) for i in R_0 for j in R_0 if i!=j for k in range(K) for t in truckRange)
 
     # 7 Delivery timewindow
-    model.addConstrs((quicksum(x[t,k,i,j] for k in range(K) for j in R_0 if i!=j))==(w[t,i]) for i in R for t in range(e[i],l[i]+1))
+    model.addConstrs((quicksum(x[t,k,j,i] for k in range(K) for j in R_0 if i!=j))==(w[t,i]) for i in R for t in range(e[i],l[i]+1))
 
     # 8 Each request is delivered
     model.addConstrs(quicksum(w[t,i] for t in range(e[i],l[i]+1)) == 1 for i in R)
@@ -220,9 +220,8 @@ def solve(instance, max_seconds):
     model.Params.BestObjStop
     model._x = x
     model.setParam('TimeLimit', max_seconds)
+    model.setParam('MIPFocus',1)
     model.optimize()
-
-    model.printAttr("x")
 
     x_sol = model.getAttr("x",x)
     z_sol = model.getAttr("x",z)
