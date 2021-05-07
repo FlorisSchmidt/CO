@@ -28,8 +28,14 @@ def main():
         import glob
         for file in glob.glob("instances 2021/*.txt"):
             instance = InstanceVerolog2019(file)
-            solution = milp.solve(extraction.extract(instance),20)
-            output.print_solution(solution,instance.Name)
+            try: 
+                x_solution, z_solution = milp.solve(extraction.extract(instance),20)
+                output.print_model(x_solution,z_solution, instance.Name)
+            except:
+                solution = greedy.solve(instance)
+                print('oi')
+                output.print_solution(solution,instance.Name)
+
     else:
         instance = InstanceVerolog2019(args.instancefile)
         model = milp.solve(extraction.extract(instance),5)

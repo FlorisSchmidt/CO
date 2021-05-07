@@ -236,10 +236,7 @@ def solve(instance, max_seconds):
         value = z_sol[i]
         if value > 0.5:
             z_sol_clean[i] = value
-
-    def print_solution(x_sol_clean):
-        output.print_model(x_sol,z_sol)
             
-    output.print_model(x_sol_clean,z_sol_clean, instance.Name)
+    # output.print_model(x_sol_clean,z_sol_clean, instance.Name)
 
-    return model
+    return x_sol_clean, z_sol_clean
