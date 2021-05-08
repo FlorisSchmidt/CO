@@ -2,7 +2,7 @@ import math
 
 # return euclidan distance
 def euclidean(xa,ya,xb,yb):
-    return math.sqrt(math.pow((xa-xb),2) + math.pow((ya-yb),2))
+    return math.ceil(math.sqrt(math.pow((xa-xb),2) + math.pow((ya-yb),2)))
 
 # Insert new location in route. e.g. [1,2,1] -> [1,2,3,1]
 def insert_in_route(location,route):
