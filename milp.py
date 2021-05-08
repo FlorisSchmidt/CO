@@ -8,13 +8,10 @@ import output
 from gurobipy import GRB, quicksum
 
 def solve(instance, max_seconds):
-    solution = classes.Solution(instance.Days)
-
     model = gp.Model()
 
     def calc_dist(a,b):
         return functions.euclidean(a[0],a[1],b[0],b[1])
-
     #Sets
     R = {} #requests
     R_0 = {} #requests and depot
@@ -24,13 +21,9 @@ def solve(instance, max_seconds):
     T = instance.Days
     H_0 = [instance.Locations.get(1)[0],instance.Locations.get(1)[1]]
     D = instance.TruckMaxDistance
-    #M_t = instance ?? Mt: upper bound on the number of visits a vehicle can do to depot on day t.
     truckRange = range(1,T)
     techRange = range(2,T+1)
     M = {new_list: 0 for new_list in truckRange}
-    coordinates = list(instance.Locations.values())
-    #dist between locations 1 and 2 with d_ij[0][1]
-    #d_ij = distance.cdist(coordinates,coordinates,'euclidean')
     e = {} # first day that request i can be delivered
     e['depot'] = 1 # depot can always be visited
     l = {} # last day that request i can be delivered
@@ -68,7 +61,6 @@ def solve(instance, max_seconds):
         N_s["S"+str(technician.ID)] = technician.maxInstalls
         S+=1
         techLoc = [instance.Locations[technician.locID][0],instance.Locations[technician.locID][1]]
-
         can_install = {}
         current_tech = []
         for request in instance.Requests:
@@ -240,30 +232,17 @@ def solve(instance, max_seconds):
     model.addConstrs(quicksum(p[u,s] for u in range(T-5+2,T)) <=5-p[T,s] for s in R_s)
 
     # 24 Calculates b (idling time)
-    model.addConstrs(quicksum(t*y[t,i] for t in range(e[i]+1+1,T+1))-quicksum(t*w[t,i] for t in range(e[i]+1,l[i]+1))-1==b[i] for i in R)
+    model.addConstrs(quicksum(t*y[t,i] for t in range(e[i]+1,T+1))-quicksum(t*w[t,i] for t in range(e[i],l[i]+1))-1==b[i] for i in R)
 
     # 25 Objective
     model.setObjective(obj,GRB.MINIMIZE)
 
-    model.Params.LogToConsole = True
-    model.Params.BestObjStop
-    model._x = x
+    model.Params.LogToConsole = False
     model.setParam('TimeLimit', max_seconds)
     model.setParam('MIPFocus',1)
     model.optimize()
 
-    x_sol = model.getAttr("x",x)
-    z_sol = model.getAttr("x",z)
+    x_sol = {key: value for key, value in model.getAttr("x",x).items() if value >= 0.5}
+    z_sol = {key: value for key, value in model.getAttr("x",z).items() if value >= 0.5}
 
-    x_sol_clean = {}
-    z_sol_clean = {}
-    for i in x_sol:
-        value = x_sol[i]
-        if value > 0.5:
-            x_sol_clean[i] = value
-    for i in z_sol:
-        value = z_sol[i]
-        if value > 0.5:
-            z_sol_clean[i] = value
-
-    return x_sol_clean, z_sol_clean
+    return x_sol, z_sol
