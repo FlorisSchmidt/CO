@@ -32,7 +32,9 @@ def solve(instance, max_seconds):
     #dist between locations 1 and 2 with d_ij[0][1]
     #d_ij = distance.cdist(coordinates,coordinates,'euclidean')
     e = {} # first day that request i can be delivered
+    e['depot'] = 1 # depot can always be visited
     l = {} # last day that request i can be delivered
+    l['depot'] = T+1#depot can be visited on last day
     C = instance.TruckCapacity #Truck capacity
     c_i = {} #capacity needed to deliver request i
     a_si =[] #1 if technician s can satisfy request i
@@ -77,19 +79,17 @@ def solve(instance, max_seconds):
                 current_tech.append(0)
         can_install["S"+str(technician.ID)] = techLoc
         R_s["S"+str(S)] = can_install
+        e['S'+str(S)] = 1
         a_si.append(current_tech)
     
     R_0['depot'] = H_0
-
     K = max(M.values())
-     # Requests and depot (at 0)
-    
     #Decision variables
     #x_ij_k truck visits location j after location i: 1 if truck visits, 0 otherwise
-    x = model.addVars(((t,k,i,j) for t in truckRange for k in range(K) for i in R_0 for j in R_0 if i!=j), vtype=GRB.BINARY, name='x')
+    x = model.addVars(((t,k,i,j) for t in truckRange for k in range(K) for i in R_0 if t<=l[i] and t>=e[i] for j in R_0 if i!=j and t<=l[j] and t>=e[j]), vtype=GRB.BINARY, name='x')
 
     #z_ij_s technician s visits location j after location i: 1 if technician visits, 0 otherwise
-    z = model.addVars(((t,s,i,j) for t in techRange for s in R_s for i in R_s[s] for j in R_s[s] if i!=j), vtype=GRB.BINARY, name='z')
+    z = model.addVars(((t,s,i,j) for t in techRange for s in R_s for i in R_s[s] if t>=e[i]+1 for j in R_s[s] if t>=e[j]+1 if i!=j), vtype=GRB.BINARY, name='z')
 
     #m_k number of trucks used for entire planning: 1 if truck k is used, 0 otherwise
     m = model.addVars((k for k in range(K)), vtype=GRB.BINARY, name = 'm')
@@ -121,82 +121,111 @@ def solve(instance, max_seconds):
     # 1 Objective
     obj = quicksum(CV*m[k] for k in range(K)) + \
         quicksum(CVU*v[t,k] for t in truckRange for k in range(K)) + \
-        quicksum(CVT*calc_dist(R_0.get(i),R_0.get(j))*x[t,k,i,j] for k in range(K) for t in truckRange for i in R_0 for j in R_0 if i!=j) + \
+        quicksum(CVT*calc_dist(R_0.get(i),R_0.get(j))*x[t,k,i,j] for k in range(K) for t in truckRange for i in R_0 if t<=l[i] and t>=e[i] for j in R_0 if t<=l[j] and t>=e[j] if i!=j) + \
         quicksum(CT*r[s] for s in R_s) + \
         quicksum(CTU*p[t,s] for t in techRange for s in R_s) + \
-        quicksum(CTT*calc_dist(R_s[s][i],R_s[s][j])*z[t,s,i,j] for s in R_s for i in R_s[s] for j in R_s[s] if i!=j for t in techRange) + \
+        quicksum(CTT*calc_dist(R_s[s][i],R_s[s][j])*z[t,s,i,j] for s in R_s for t in techRange for i in R_s[s] if t>=e[i]+1 for j in R_s[s] if t>=e[j]+1 if i!=j ) + \
         quicksum(CI_i[i]*b[i] for i in R)
 
     # 2 arcs entering location = arcs exiting location
-    model.addConstrs(quicksum(x[t,k,i,j] for j in R_0 if i!=j) == quicksum(x[t,k,j,i] for j in R_0 if i!=j) for i in R_0 for k in range(K) for t in truckRange)
+    for t in truckRange:
+        for k in range(K):
+            for i in R_0:
+                if t<=l[i] and t>=e[i]:
+                    model.addConstr(quicksum(x[t,k,i,j] for j in R_0 if i!=j and t<=l[j] and t>=e[j]) == quicksum(x[t,k,j,i] for j in R_0 if i!=j and t<=l[j] and t>=e[j]))
+
     # 3 start and end routes at depot
-    model.addConstrs(quicksum(x[t,k,'depot',i] for i in R) == quicksum(x[t,k,i,'depot'] for i in R) for k in range(K) for t in truckRange)
+    for t in truckRange:
+            for k in range(K):
+                model.addConstr(quicksum(x[t,k,i,'depot'] for i in R if t<=l[i] and t>=e[i]) == quicksum(x[t,k,'depot',i] for i in R if t<=l[i] and t>=e[i]))
 
     # 3.1
-    model.addConstrs(quicksum(x[t,k,'depot',i] for i in R) <= M[t]*v[t,k] for k in range(K) for t in truckRange)
+    for t in truckRange:
+            for k in range(K):
+                model.addConstr(quicksum(x[t,k,i,'depot'] for i in R if t<=l[i] and t>=e[i]) <= M[t]*v[t,k])
 
     # 4 Max distance truck can drive
-    model.addConstrs(quicksum(calc_dist(R_0.get(i),R_0.get(j))*x[t,k,i,j] for i in R_0 for j in R_0 if i!=j) <= D for k in range(K) for t in truckRange)
+    for t in truckRange:
+            for k in range(K):
+                model.addConstr(quicksum(calc_dist(R_0.get(i),R_0.get(j))*x[t,k,i,j] for i in R_0 if t<=l[i] and t>=e[i] for j in R_0 if i!=j and t<=l[j] and t>=e[j]) <= D)
 
     # 5 Truck must be available
     model.addConstrs((v[t,k] <= m[k]) for k in range(K) for t in truckRange)
 
     # 6 Truck used for day and can travel
-    model.addConstrs((x[t,k,i,j]<=v[t,k]) for i in R_0 for j in R_0 if i!=j for k in range(K) for t in truckRange)
+    for t in truckRange:
+            for k in range(K):
+                model.addConstrs(x[t,k,i,j]<=v[t,k] for i in R_0 if t<=l[i] and t>=e[i] for j in R_0 if i!=j and t<=l[j] and t>=e[j])
 
     # 7 Delivery timewindow
-    model.addConstrs((quicksum(x[t,k,j,i] for k in range(K) for j in R_0 if i!=j))==(w[t,i]) for i in R for t in range(e[i],l[i]+1))
+    for i in R:
+        for t in range(e[i],l[i]+1):
+            if t<=l[i] and t>=e[i]:
+                model.addConstr(quicksum(x[t,k,i,j] for k in range(K) for j in R_0 if i!=j and t<=l[j] and t>=e[j])==(w[t,i]))
 
     # 8 Each request is delivered
     model.addConstrs(quicksum(w[t,i] for t in range(e[i],l[i]+1)) == 1 for i in R)
 
     # 9 Weight is removed after visiting request (subtour elimitation)
-    model.addConstrs(q[j,k] <= q[i,k]-(x[t,k,i,j])*(C+c_i[j])+C for i in R_0 for j in R if i!=j for k in range(K) for t in truckRange)
+    for t in truckRange:
+            for k in range(K):
+                model.addConstrs(q[j,k] <= q[i,k]-(x[t,k,i,j])*(C+c_i[j])+C for i in R_0 if t<=l[i] and t>=e[i] for j in R if i!=j and t<=l[j] and t>=e[j])
 
     # 10 Max weight from truck
     model.addConstrs(q['depot',k]==C for k in range(K))
 
     # 11 A location should be visited by technician
-    model.addConstrs(quicksum(z[t,s,i,j] for j in R_s[s] if i!=j) == quicksum(z[t,s,j,i] for j in R_s[s] if i!=j) for s in R_s for t in techRange for i in R_s[s])
+    for t in techRange:
+        for s in R_s:
+            for i in R_s[s]:
+                if t>=e[i]+1:
+                    model.addConstr(quicksum(z[t,s,i,j] for j in R_s[s] if i!=j and t>=e[j]+1) == quicksum(z[t,s,j,i] for j in R_s[s] if i!=j and t>=e[j]+1))
 
     # 12 start and end route at home
-    model.addConstrs(quicksum(z[t,s,i,s] for i in R_s[s] if i!=s) == quicksum(z[t,s,s,i] for i in R_s[s] if i!=s) for s in R_s for t in techRange)
+    for t in techRange:
+        for s in R_s:
+            model.addConstr(quicksum(z[t,s,i,s] for i in R_s[s] if i!=s and t>=e[i]+1) == quicksum(z[t,s,s,i] for i in R_s[s] if i!=s and t>=e[i]+1))
 
     # 12.1
-    model.addConstrs(quicksum(z[t,s,i,s] for i in R_s[s] if i!=s) == p[t,s] for s in R_s for t in techRange)
+    for t in techRange:
+        for s in R_s:
+            model.addConstr(quicksum(z[t,s,i,s] for i in R_s[s] if i!=s and t>=e[i]+1) == p[t,s])
 
     # 13 Technician max distance
-    model.addConstrs(quicksum(calc_dist(R_s[s][i],R_s[s][j])*z[t,s,i,j] for i in R_s[s] for j in R_s[s] if i!=j)<=D_s[s] for t in techRange for s in R_s)
+    for t in techRange:
+        for s in R_s:
+            model.addConstr(quicksum(calc_dist(R_s[s][i],R_s[s][j])*z[t,s,i,j] for i in R_s[s] if t>=e[i]+1 for j in R_s[s] if i!=j and t>=e[j]+1)<=D_s[s])
 
     # 14 Max number of installs
-    model.addConstrs(quicksum(z[t,s,i,j] for i in R_s[s] for j in R_s[s] if i!=j and j!=s)<=N_s[s] for t in techRange for s in R_s)
+    for t in techRange:
+        for s in R_s:
+            model.addConstr(quicksum(z[t,s,i,j] for i in R_s[s] if t>=e[i]+1 for j in R_s[s] if i!=j and j!=s and t>=e[j]+1)<=N_s[s])
 
     # 15 Technician has been hired
     model.addConstrs(p[t,s]<=r[s] for t in techRange for s in R_s)
 
     # 16 Technician can travel between requests in one day
-    model.addConstrs(z[t,s,i,j]<=p[t,s] for t in techRange for s in R_s for i in R_s[s] for j in R_s[s] if i!=j)
+    for t in techRange:
+        for s in R_s:
+            model.addConstrs(z[t,s,i,j]<=p[t,s] for i in R_s[s] if t>=e[i]+1 for j in R_s[s] if i!=j and t>=e[j]+1)
 
     # 17 Machine can be installed one day after delivery
-    #model.addConstrs(z.sum(t,s,i,j)==y[t,i] for s in R_s for i in R_s[s] for j in R_s[s] if i!=j if i!=s for t in range(e[i]+1,T+1))
-
     for i in R:
         for t in range(e[i]+1,T+1):
             total = 0
             for s in R_s:
                 for j in R_s[s]:
-                    if i!=j and i in R_s[s]:
+                    if i!=j and i in R_s[s] and t>=e[j]+1:
                         total+=z[t,s,i,j]
             model.addConstr(total==y[t,i])
-            #model.addConstrs(quicksum(z[t,s,i,j] for s in R_s for j in R_s[s] if i!=j)==y[t,i])
-                    
-    #model.addConstrs(quicksum(z[t,s,i,j] )==y[t,i] for s in R_s for i in R_s[s] if i!=s for t in range(e[i]+1,T+1))
 
     # 18 Each request is installed
     model.addConstrs(quicksum(y[t,i] for t in range(e[i]+1,T+1)) == 1 for i in R)
 
     # 19 subtours never form in technician routes.
-    model.addConstrs(g[j,s] <= g[i,s]-(z[t,s,i,j])*(1+N_s[s])+N_s[s] for s in R_s for i in R_s[s] for j in R_s[s] if i!=j and j!=s for t in techRange)
+    for t in techRange:
+        for s in R_s:
+            model.addConstrs(g[j,s] <= g[i,s]-(z[t,s,i,j])*(1+N_s[s])+N_s[s] for i in R_s[s] if t>=e[i]+1 for j in R_s[s] if i!=j and j!=s and t>=e[j]+1)
 
     # 20 Max number of visits technician per day
     model.addConstrs(g[s,s]==N_s[s] for s in R_s)
@@ -236,7 +265,5 @@ def solve(instance, max_seconds):
         value = z_sol[i]
         if value > 0.5:
             z_sol_clean[i] = value
-            
-    # output.print_model(x_sol_clean,z_sol_clean, instance.Name)
 
     return x_sol_clean, z_sol_clean
